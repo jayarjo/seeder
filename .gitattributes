@@ -1,0 +1,7 @@
+src/ export-ignore
+typings/ export-ignore
+node_modules/ export-ignore
+jest.config.js export-ignore
+tsconfig.json export-ignore
+*.js.map export-ignore
+.* export-ignore

@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "lib": ["es2017"],
+    "target": "es6",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "outDir": "./lib",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "esModuleInterop": true,
+    "sourceMap": true,
+    "declaration": true,
+    "baseUrl": ".",
+    "paths": {
+      "@docroot/*": ["src/*"],
+      "*": ["type-overrides/*", "node_modules", "types/"],
+    },
+    "incremental": true,
+    "typeRoots": ["./types", "./node_modules/@types"],
+    "allowJs": true
+  },
+  "include": ["src/**/*", "types/**/*", "lib/matchers/index.d.ts", "type-overrides/wkx"],
+  "exclude": ["node_modules", "lib", "package"]
+}
