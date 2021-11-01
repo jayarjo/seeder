@@ -66,7 +66,7 @@ const handleCommand = async ({
     await seeder.seed(tableNames);
   } else {
     const data = tableNames.reduce((obj, tableName) => {
-      const factoryPath = resolve(__dirname, factoryDir, 'table.js');
+      const factoryPath = resolve(process.cwd(), factoryDir, 'table.js');
       if (!existsSync(factoryPath)) {
         console.error(`Factory for ${tableName} cannot be found at ${factoryPath}`);
         process.exit(1);
