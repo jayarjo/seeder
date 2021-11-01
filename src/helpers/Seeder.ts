@@ -2,7 +2,7 @@ import pgStructure, { Db, Entity, Column, EnumType, ForeignKey, Action } from 'p
 import { Client, ClientConfig } from 'pg';
 import faker from 'faker';
 import { prepareValue } from 'pg/lib/utils';
-import { invariant, isEmpty, isEmptyObj, changeKeyCase, isEmptyArray } from '../utils';
+import { invariant, isEmpty, isEmptyObj, changeKeyCase, isEmptyArray, arrayToObj } from '../utils';
 import { random, omit, repeat } from 'lodash';
 import { TableName, TableRow, SeedRegistry, RowFactory, RowFactoryGenerator, DependencyMesh, Meta } from '../types';
 
@@ -131,17 +131,17 @@ export class Seeder {
 
   protected async getConstraints(): Promise<Record<TableName, Constraint[]>> {
     const { rows, rowCount } = await this.pgClient.query(`
-      SELECT 
-        pgc.conname AS constraint_name, 
-        ccu.table_schema AS table_schema, 
-        ccu.table_name, 
-        ccu.column_name, 
-        pgc.consrc AS condition 
-      FROM pg_constraint pgc 
-        LEFT JOIN information_schema.constraint_column_usage ccu 
-          ON pgc.conname = ccu.constraint_name 
-      WHERE table_schema = 'public' AND contype = 'c' 
-      ORDER BY constraint_name; 
+      SELECT
+        pgc.conname AS constraint_name,
+        ccu.table_schema AS table_schema,
+        ccu.table_name,
+        ccu.column_name,
+        pgc.consrc AS condition
+      FROM pg_constraint pgc
+        LEFT JOIN information_schema.constraint_column_usage ccu
+          ON pgc.conname = ccu.constraint_name
+      WHERE table_schema = 'public' AND contype = 'c'
+      ORDER BY constraint_name;
     `);
     if (rowCount) {
       return rows.reduce((map, row) => {
@@ -580,10 +580,11 @@ export class Seeder {
   }
 
   async seed(data: Record<TableName, RowFactory[]>, ignorePrimaryKeys?: boolean): Promise<SeedRegistry>;
+  async seed(tableNames: TableName[]): Promise<SeedRegistry>;
   async seed(tableName, rowFactory: RowFactory | RowFactoryGenerator, num?: number): Promise<TableRow[]>;
   async seed(...args: any[]): Promise<TableRow[] | SeedRegistry> {
     return typeof args[0] === 'object'
-      ? this.seedMultiTable(args[0], args[1] ?? true)
+      ? this.seedMultiTable(Array.isArray(args[0]) ? arrayToObj(args[0]) : args[0], args[1] ?? true)
       : this.seedTable(args[0], args[1], args[2] ?? 1);
   }
 

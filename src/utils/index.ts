@@ -3,7 +3,7 @@ import * as caseMethods from './case';
 import { ColumnCase } from '../types';
 import { omitBy } from 'lodash';
 
-export function invariant(expr: boolean, message: string): asserts expr {
+export function invariant(expr: any, message: string): asserts expr {
   if (!expr) {
     throw new Error(message);
   }
@@ -68,3 +68,5 @@ export const handOut = (arr: any[]) => {
 export const areDatesSimilar = (date1: Date, date2: Date, deltaMs: number = 500) => {
   return Math.abs(date1.getTime() - date2.getTime()) <= deltaMs;
 };
+
+export const arrayToObj = (arr: string[]) => arr.reduce((obj, name) => ({ ...obj, [name]: {} }), {});
