@@ -55,7 +55,7 @@
     "babel-eslint": "^10.0.2",
     "cross-env": "^6.0.3",
     "dotenv": "^8.1.0",
-    "eslint": "^6.4.0",
+    "eslint": "^8.1.0",
     "eslint-config-standard": "^12.0.0",
     "eslint-plugin-import": "^2.18.2",
     "eslint-plugin-node": "^8.0.1",
@@ -70,10 +70,10 @@
     "npm-github-release": "^0.12.0",
     "prettier": "^1.16.4",
     "rimraf": "^3.0.0",
-    "shx": "^0.3.2",
+    "shx": "^0.3.3",
     "ts-jest": "^27.0.7",
     "ts-node": "^8.8.2",
-    "tsconfig-paths": "^3.9.0",
+    "tsconfig-paths": "^3.11.0",
     "typescript": "3.8.3"
   }
 }
