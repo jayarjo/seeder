@@ -24,12 +24,12 @@
     "docs": "typedoc --tsconfig ./tsconfig.prod.json --theme minimal --hideGenerator --includeDeclarations --excludePrivate --excludeExternals --mode library --out ./docs/$npm_package_version ./src/index.ts"
   },
   "dependencies": {
-    "@turf/area": "^6.3.0",
-    "@turf/bbox": "^6.0.1",
-    "@turf/boolean-valid": "^6.2.0-alpha.1",
-    "@turf/difference": "^6.3.0",
-    "@turf/explode": "^5.1.5",
-    "@turf/helpers": "^6.1.4",
+    "@turf/area": "^6.5.0",
+    "@turf/bbox": "^6.5.0",
+    "@turf/boolean-valid": "^6.5.0",
+    "@turf/difference": "^6.5.0",
+    "@turf/explode": "^6.5.0",
+    "@turf/helpers": "^6.5.0",
     "change-case": "^4.1.1",
     "debug": "^4.1.1",
     "expect": "^25.5.0",
