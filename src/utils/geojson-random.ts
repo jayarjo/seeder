@@ -1,5 +1,5 @@
 // adapted from https://www.npmjs.com/package/geojson-random
-import { FeatureCollection, Point, LineString, Polygon, BBox, Position } from 'geojson';
+import { FeatureCollection, Point, LineString, Polygon, BBox, Position, Feature, Geometry } from 'geojson';
 
 function vertexToCoordinate(hub) {
   return function(cur) {
@@ -51,11 +51,11 @@ function feature(geom) {
   };
 }
 
-function collection(f) {
+function collection<T extends Geometry = Geometry>(features) {
   return {
     type: 'FeatureCollection',
-    features: f,
-  };
+    features,
+  } as FeatureCollection<T>;
 }
 
 export const position = function position(bbox?: BBox): Position {
@@ -68,7 +68,7 @@ export const point = function(count: number, bbox?: BBox): FeatureCollection<Poi
   for (let i = 0; i < count; i++) {
     features.push(feature(bbox ? geometry('Point', position(bbox)) : geometry('Point', [lon(), lat()])));
   }
-  return collection(features);
+  return collection<Point>(features);
 };
 
 export const polygon = function(
@@ -99,7 +99,7 @@ export const polygon = function(
     features.push(feature(geometry('Polygon', [vertices])));
   }
 
-  return collection(features);
+  return collection<Polygon>(features);
 };
 
 export const lineString = function(
@@ -129,5 +129,5 @@ export const lineString = function(
     features.push(feature(geometry('LineString', vertices)));
   }
 
-  return collection(features);
+  return collection<LineString>(features);
 };
