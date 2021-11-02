@@ -549,7 +549,7 @@
   resolved "https://registry.yarnpkg.com/@microsoft/tsdoc/-/tsdoc-0.12.24.tgz#30728e34ebc90351dd3aff4e18d038eed2c3e098"
   integrity sha512-Mfmij13RUTmHEMi9vRUhMXD7rnGR2VvxeNYtaGtaJ4redwwjT4UXYJ+nzmVJF7hhd4pn/Fx5sncDKxMVFJSWPg==
 
-"@paztis/typedoc@^0.1.6":
+"@paztis/typedoc@^0.1.7":
   version "0.1.7"
   resolved "https://registry.yarnpkg.com/@paztis/typedoc/-/typedoc-0.1.7.tgz#ee19a72fe95f756287f1c72b2f190de9247aa9eb"
   integrity sha512-RcAvTp6KMKfvUPNl4L12LVz+GKz684xtTnz0tKRkCdsaMqr9fJdka04pCqA4Eo+5YB1w/SPF6+cMtB5X/cN5CA==
