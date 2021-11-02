@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { camelCase } from 'camel-case';
 import { existsSync } from 'fs';
 import { resolve } from 'path';
@@ -89,7 +90,7 @@ const handleCommand = async ({
   );
 
   const seeder = new (postgis ? PostgisSeeder : Seeder)(
-    { host, port, user, password, database },
+    { host, port: +port, user, password, database },
     { ignoreNullable: false, fixSerials: false, ...seederOptions }
   );
 
