@@ -1,10 +1,10 @@
 import pgStructure, { Db, Entity, Column, EnumType, ForeignKey, Action } from 'pg-structure';
-import { Client, ClientConfig } from 'pg';
 import faker from 'faker';
 import { prepareValue } from 'pg/lib/utils';
 import { invariant, isEmpty, isEmptyObj, changeKeyCase, isEmptyArray, arrayToObj } from '../utils';
 import { random, omit, repeat } from 'lodash';
 import { TableName, TableRow, SeedRegistry, RowFactory, RowFactoryGenerator, DependencyMesh, Meta } from '../types';
+import { Client, ClientConfig } from './Client';
 
 const log = require('debug')('truck-tester:seeder');
 
@@ -81,25 +81,15 @@ export class Seeder {
 
   protected seededRegistry: SeedRegistry = {};
 
-  protected pgClient: Client;
+  protected db: Client;
 
   /**
    * Only CHECK constraints
    */
   protected constraintsByTable: Record<TableName, Constraint[]> = {};
 
-  constructor(pgClient: string | ClientConfig | Client, props: SeederProps = {}) {
-    if (pgClient instanceof Client) {
-      this.pgClient = pgClient;
-    } else if (typeof pgClient === 'string') {
-      this.pgClient = new Client({
-        connectionString: pgClient,
-      });
-    } else if (typeof pgClient === 'object') {
-      this.pgClient = new Client(pgClient);
-    } else {
-      throw new Error(`pgClient argument should be either connectionString, ClientConfig or instance of Client`);
-    }
+  constructor(dbConfig: ClientConfig, props: SeederProps = {}) {
+    this.db = new Client(dbConfig);
 
     this.props = {
       ignoreColumns: [],
@@ -117,7 +107,8 @@ export class Seeder {
 
   protected async getStruct(): Promise<Db> {
     if (!this.struct) {
-      this.struct = await pgStructure(this.pgClient, { includeSchemas: ['public'], keepConnection: true });
+      const client = await this.db.getPgClient();
+      this.struct = await pgStructure(client, { includeSchemas: ['public'], keepConnection: true });
       // potentially we could try and satisfy those constraints automatically (TODO: investigate that)
       this.constraintsByTable = await this.getConstraints();
     }
@@ -130,7 +121,7 @@ export class Seeder {
   }
 
   protected async getConstraints(): Promise<Record<TableName, Constraint[]>> {
-    const { rows, rowCount } = await this.pgClient.query(`
+    const { rows, rowCount } = await this.db.query(`
       SELECT
         pgc.conname AS constraint_name,
         ccu.table_schema AS table_schema,
@@ -233,7 +224,7 @@ export class Seeder {
 
   protected prepareValue(value: any) {
     const preparedValue = prepareValue(value);
-    return `${typeof preparedValue === 'string' ? this.pgClient.escapeLiteral(preparedValue) : preparedValue}`;
+    return `${typeof preparedValue === 'string' ? this.db.escapeLiteral(preparedValue) : preparedValue}`;
   }
 
   protected prepareSql(sql, values): string {
@@ -252,7 +243,7 @@ export class Seeder {
     const seqName = col.default.toString().match(/^nextval\('([^\']+)'/i)?.[1];
     const {
       rows: [lastRow],
-    } = await this.pgClient.query(
+    } = await this.db.query(
       `SELECT setval('${seqName}', ${startValue ?? `(SELECT MAX(id) from "${col.table.name}")`}) AS id`
     );
     return lastRow.id;
@@ -264,7 +255,7 @@ export class Seeder {
       .join(' AND ');
     const {
       rows: [lastRow],
-    } = await this.pgClient.query(
+    } = await this.db.query(
       `SELECT * FROM ${tableName} ${!isEmpty(whereClause) ? `WHERE ${whereClause}` : 'ORDER BY id DESC'}`,
       Object.values(where)
     );
@@ -276,7 +267,7 @@ export class Seeder {
     if (isEmptyObj(row)) {
       sql = `INSERT INTO ${tableName} DEFAULT VALUES RETURNING *`;
     } else {
-      const cols = Object.keys(row).map((colName) => this.pgClient.escapeIdentifier(colName));
+      const cols = Object.keys(row).map((colName) => this.db.escapeIdentifier(colName));
       const values = Object.values(row);
       const placeholdersStr = values.map((_, idx) => `$${idx + 1}`).join(', ');
       sql = this.prepareSql(
@@ -285,7 +276,7 @@ export class Seeder {
       );
     }
     log(sql);
-    const { rows } = await this.pgClient.query(sql);
+    const { rows } = await this.db.query(sql);
 
     invariant(
       !isEmptyObj(rows[0]),
@@ -364,7 +355,7 @@ export class Seeder {
   }
 
   protected async grabRandomValueFor(tableName: TableName, colName: string, limit = 100): Promise<any> {
-    const { rows, rowCount } = await this.pgClient.query(`SELECT ${colName} FROM ${tableName} LIMIT ${limit}`);
+    const { rows, rowCount } = await this.db.query(`SELECT ${colName} FROM ${tableName} LIMIT ${limit}`);
     invariant(rowCount > 0, `'${tableName}' is declared as non empty table, but is empty`);
     return rows[random(0, rows.length - 1)][colName];
   }
@@ -537,7 +528,7 @@ export class Seeder {
 
     this.seededRegistry = {}; // start fresh
     try {
-      await this.pgClient.query('BEGIN');
+      await this.db.query('BEGIN');
       for (const tableName in data) {
         invariant(
           allowSeedingEnumTable || isEmptyArray(enumTables) || !enumTables.includes(tableName),
@@ -545,17 +536,17 @@ export class Seeder {
         );
         await seedDepTable(tableName, depMesh[tableName]);
       }
-      await this.pgClient.query('COMMIT');
+      await this.db.query('COMMIT');
       return this.seededRegistry;
     } catch (ex) {
-      await this.pgClient.query('ROLLBACK');
+      await this.db.query('ROLLBACK');
       throw ex;
     }
   }
 
   protected async seedTable(
     tableName,
-    rowFactory: RowFactory | RowFactoryGenerator,
+    rowFactory?: RowFactory | RowFactoryGenerator,
     num: number = 1
   ): Promise<TableRow[]> {
     const { allowSeedingEnumTable, enumTables } = this.props;
@@ -567,21 +558,21 @@ export class Seeder {
 
     this.seededRegistry = {}; // start fresh
     try {
-      await this.pgClient.query('BEGIN');
+      await this.db.query('BEGIN');
       for (let i = 0; i < num; i++) {
         await this.seedRow(tableName, typeof rowFactory === 'function' ? rowFactory(i) : rowFactory);
       }
-      await this.pgClient.query('COMMIT');
+      await this.db.query('COMMIT');
       return this.seededRegistry[tableName];
     } catch (ex) {
-      await this.pgClient.query('ROLLBACK');
+      await this.db.query('ROLLBACK');
       throw ex;
     }
   }
 
   async seed(data: Record<TableName, RowFactory[]>, ignorePrimaryKeys?: boolean): Promise<SeedRegistry>;
   async seed(tableNames: TableName[]): Promise<SeedRegistry>;
-  async seed(tableName, rowFactory: RowFactory | RowFactoryGenerator, num?: number): Promise<TableRow[]>;
+  async seed(tableName, rowFactory?: RowFactory | RowFactoryGenerator, num?: number): Promise<TableRow[]>;
   async seed(...args: any[]): Promise<TableRow[] | SeedRegistry> {
     return typeof args[0] === 'object'
       ? this.seedMultiTable(Array.isArray(args[0]) ? arrayToObj(args[0]) : args[0], args[1] ?? true)
@@ -591,19 +582,19 @@ export class Seeder {
   async seedSpot(tableName, factoryData: any): Promise<TableRow> {
     this.seededRegistry = {}; // start fresh
     try {
-      await this.pgClient.query('BEGIN');
+      await this.db.query('BEGIN');
       const row = await this.seedForeignRows(tableName, factoryData);
-      await this.pgClient.query('COMMIT');
+      await this.db.query('COMMIT');
       return row;
     } catch (ex) {
-      await this.pgClient.query('ROLLBACK');
+      await this.db.query('ROLLBACK');
       throw ex;
     }
   }
 
   async close() {
-    await this.pgClient.end();
-    this.pgClient = null;
+    await this.db.close();
+    this.db = null;
     this.seededRegistry = {};
   }
 }

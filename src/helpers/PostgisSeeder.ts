@@ -1,11 +1,11 @@
 import { Seeder, SeederProps } from './Seeder';
 import { Column, Db } from 'pg-structure';
 import { formatForDB, formatGeometryTo, getRandomGeometry } from '../utils/geometry';
-import { Client, ClientConfig } from 'pg';
 import { WGS_SRID } from '../constants/spatial';
 import { BBox } from '@turf/helpers';
 import { invariant } from '../utils';
 import { TableRow, GeometryFormat, GeometryType, GeometryColumnType } from '../types';
+import { ClientConfig } from './Client';
 
 export interface PostgisSeederProps extends SeederProps {
   /**
@@ -32,7 +32,7 @@ export class PostgisSeeder extends Seeder {
   protected geometryColumnTypes: Record<string, Record<string, GeometryColumnType>>;
 
   constructor(
-    pgClient: string | ClientConfig | Client,
+    config: ClientConfig,
     {
       sridOfIOGeometry = WGS_SRID,
       sridOfDBGeometry = WGS_SRID,
@@ -41,7 +41,7 @@ export class PostgisSeeder extends Seeder {
       ...props
     }: PostgisSeederProps = {}
   ) {
-    super(pgClient, props);
+    super(config, props);
 
     this.props = {
       ...this.props,
@@ -109,7 +109,7 @@ export class PostgisSeeder extends Seeder {
   }
 
   private async getGeometryColumnTypes(): Promise<Record<string, Record<string, GeometryColumnType>>> {
-    const result = await this.pgClient.query(`SELECT * FROM geometry_columns WHERE f_table_schema = 'public'`);
+    const result = await this.db.query(`SELECT * FROM geometry_columns WHERE f_table_schema = 'public'`);
     if (result.rowCount > 0) {
       return result.rows.reduce((registry, row) => {
         if (!registry[row['f_table_name']]) {
@@ -158,7 +158,7 @@ export class PostgisSeeder extends Seeder {
           if (col.isPrimaryKey) {
             primaryKey = col.name;
           }
-          colName = this.pgClient.escapeIdentifier(col.name);
+          colName = this.db.escapeIdentifier(col.name);
         }
         columns.push(colName);
       }
@@ -171,7 +171,7 @@ export class PostgisSeeder extends Seeder {
         ]);
         const {
           rows: [lastRow],
-        } = await this.pgClient.query(sql);
+        } = await this.db.query(sql);
         return lastRow;
       }
     }
