@@ -126,8 +126,7 @@ export class Seeder {
         pgc.conname AS constraint_name,
         ccu.table_schema AS table_schema,
         ccu.table_name,
-        ccu.column_name,
-        pgc.consrc AS condition
+        ccu.column_name
       FROM pg_constraint pgc
         LEFT JOIN information_schema.constraint_column_usage ccu
           ON pgc.conname = ccu.constraint_name
