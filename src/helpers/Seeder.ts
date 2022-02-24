@@ -515,7 +515,8 @@ export class Seeder {
       // seed each row and log mapping between original and final result of primary keys
       const valueMaps = { [primaryKey]: {} };
       for (let i = 0; i < rows.length; i++) {
-        const seededRow = await this.seedRow(tableName, omit(rows[i], primaryKey));
+        const seededRow = await this.seedRow(tableName, ignorePrimaryKeys ? omit(rows[i], primaryKey) : rows[i]);
+
 
         if (rows[i].hasOwnProperty(primaryKey)) {
           valueMaps[primaryKey][rows[i][primaryKey]] = seededRow[primaryKey];
