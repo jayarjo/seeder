@@ -105,10 +105,14 @@ const handleCommand = async ({
       }
     } else {
       if (!factoryDir) {
-        await seeder.seed(tableNames);
+        const data = tableNames.reduce(
+          (obj, tableName) => ({ ...obj, [tableName]: [{}] }),
+          {}
+        );
+        await seeder.seed(data);
       } else {
         const data = tableNames.reduce(
-          (obj, tableName) => ({ ...obj, [tableName]: getFactory(tableName, factoryDir) }),
+          (obj, tableName) => ({ ...obj, [tableName]: [getFactory(tableName, factoryDir)] }),
           {}
         );
         await seeder.seed(data);
