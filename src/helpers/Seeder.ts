@@ -11,6 +11,9 @@ const log = require('debug')('truck-tester:seeder');
 const isRelative = (key: ForeignKey): boolean => key.onDelete === Action.NoAction;
 const isBoss = (key: ForeignKey): boolean => !isRelative(key);
 
+// Always quote table names for PostgreSQL compatibility - harmless and eliminates reserved keyword issues
+const quoteTableName = (tableName: string): string => `"${tableName}"`;
+
 const fakeAddressObject = () =>
   Object.keys(faker.address).reduce(
     (acc, key) =>
@@ -255,7 +258,7 @@ export class Seeder {
     const {
       rows: [lastRow],
     } = await this.db.query(
-      `SELECT * FROM ${tableName} ${!isEmpty(whereClause) ? `WHERE ${whereClause}` : 'ORDER BY id DESC'}`,
+      `SELECT * FROM ${quoteTableName(tableName)} ${!isEmpty(whereClause) ? `WHERE ${whereClause}` : 'ORDER BY id DESC'}`,
       Object.values(where)
     );
     return lastRow;
@@ -263,14 +266,15 @@ export class Seeder {
 
   protected async insertRow(tableName, row: any = {}): Promise<TableRow> {
     let sql;
+    const quotedTableName = quoteTableName(tableName);
     if (isEmptyObj(row)) {
-      sql = `INSERT INTO ${tableName} DEFAULT VALUES RETURNING *`;
+      sql = `INSERT INTO ${quotedTableName} DEFAULT VALUES RETURNING *`;
     } else {
       const cols = Object.keys(row).map((colName) => this.db.escapeIdentifier(colName));
       const values = Object.values(row);
       const placeholdersStr = values.map((_, idx) => `$${idx + 1}`).join(', ');
       sql = this.prepareSql(
-        `INSERT INTO ${tableName} (${cols.join(', ')}) VALUES (${placeholdersStr}) RETURNING *`,
+        `INSERT INTO ${quotedTableName} (${cols.join(', ')}) VALUES (${placeholdersStr}) RETURNING *`,
         values
       );
     }
@@ -354,7 +358,7 @@ export class Seeder {
   }
 
   protected async grabRandomValueFor(tableName: TableName, colName: string, limit = 100): Promise<any> {
-    const { rows, rowCount } = await this.db.query(`SELECT ${colName} FROM ${tableName} LIMIT ${limit}`);
+    const { rows, rowCount } = await this.db.query(`SELECT ${colName} FROM ${quoteTableName(tableName)} LIMIT ${limit}`);
     invariant(rowCount > 0, `'${tableName}' is declared as non empty table, but is empty`);
     return rows[random(0, rows.length - 1)][colName];
   }
