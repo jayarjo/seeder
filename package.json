@@ -15,7 +15,7 @@
     "email": "jayarjo@gmail.com"
   },
   "repository": {
-    "url": "https://github.com/jayarjo/seeder.git"
+    "url": "git+https://github.com/jayarjo/seeder.git"
   },
   "scripts": {
     "prebuild": "shx rm -rf lib/",
