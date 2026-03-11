@@ -596,6 +596,16 @@ export class Seeder {
     }
   }
 
+  /**
+   * Execute a raw SQL query. Public wrapper for the protected db.query method.
+   * @param sql - SQL query string with optional $1, $2, etc. placeholders
+   * @param values - Optional array of values to substitute for placeholders
+   * @returns Query result with rows and rowCount
+   */
+  async query(sql: string, values?: any[]): Promise<{ rows: any[]; rowCount: number }> {
+    return this.db.query(sql, values);
+  }
+
   async close() {
     await this.db.close();
     this.db = null;
