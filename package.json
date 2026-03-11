@@ -20,7 +20,6 @@
   "scripts": {
     "prebuild": "shx rm -rf lib/",
     "build": "tsc -p ./tsconfig.prod.json",
-    "release": "node --require dotenv/config ./node_modules/npm-github-release/index.js",
     "pretest": "yarn docker:clean || true",
     "test": "cross-env NODE_ENV=test jest --runInBand",
     "clean": "node ./cli.js clean",
@@ -69,7 +68,6 @@
     "jest": "^27.3.1",
     "jest-circus": "^27.3.1",
     "jest-extended": "^1.1.0",
-    "npm-github-release": "^0.12.0",
     "prettier": "^1.16.4",
     "rimraf": "^3.0.0",
     "shx": "^0.3.3",
